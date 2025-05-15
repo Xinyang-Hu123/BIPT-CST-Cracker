@@ -1,0 +1,2 @@
+pip freeze > requirements.txt #导出当前虚拟环境中的所有依赖包和版本信息
+pip install -r requirements.txt #导入当前虚拟环境中的所有依赖包和版本信息
