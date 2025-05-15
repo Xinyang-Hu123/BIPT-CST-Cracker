@@ -1,0 +1,71 @@
+/***************功能模块1.近期热点词汇统计******************/
+
+/***************步骤1.获取数据并查看格式******************/
+/*首先将sogou.utf8拷贝至当前用户主目录下，然后运行head指令查看文件前2行*/
+head -2 ~/danmaku.txt
+
+
+/***************步骤2.数据存储与管理******************/
+/*上传至HDFS*/
+hdfs dfs -mkdir /input
+hdfs dfs -put ~/danmaku.txt /input
+/*查看HDFS上文件*/ 
+hdfs dfs -ls /input
+
+
+/***************步骤3.数据预处理******************/
+/*创建数据集*/
+val rdd1=sc.textFile("hdfs://node01:9000/input/danmaku.txt")
+
+20111230000005	57375476989eea12	奇艺高清		1     1    http://www.qiyi.com/
+20111230000006	c5bb7774e31d0a2q	凡人修仙传	3     1    http://www.booksky.org/BookDetail
+20111230000007	57375476989e25		奇艺高清         2     1    http://www.qiyi.com/
+20111230000008	c5bb7774e31d0a54	凡人修仙传	3     1    http://www.booksky.org/BookDetail
+
+rdd1={
+"20111230000005	57375476989eea12	奇艺高清		1     1    http://www.qiyi.com/",
+"20111230000006	c5bb7774e31d0a2q	凡人修仙传	3     1    http://www.booksky.org/BookDetail",
+"20111230000007	57375476989e25		奇艺高清         2     1    http://www.qiyi.com/",
+"20111230000008	c5bb7774e31d0a54	Spark		3     1    http://spark.apache.org"}
+
+
+/*加工数据*/
+val rdd2=rdd1.map(x=>x.split("\t")).map(x=>(x(8),1))
+
+{
+Array("20111230000005","57375476989eea12", "奇艺高清" ,"1", "1", "http://www.qiyi.com/")
+Array("20111230000006","c5bb7774e31d0a2q", "凡人修仙传" ,"3", "1", "http://www.booksky.org/BookDetail")
+Array("20111230000007","57375476989e25", "奇艺高清" ,"2", "1", "http://www.qiyi.com/")
+Array("20111230000008","c5bb7774e31d0a54", "Spark" ,"3", "1", "http://spark.apache.org")
+
+}
+
+rdd2={("奇艺高清",1),("凡人修仙传",1),("奇艺高清",1),("Spark",1)}
+
+
+
+/***************步骤4.数据分析******************/
+val rdd3=rdd2.reduceByKey((x,y)=>x+y).map(x=>(x._2,x._1)).sortByKey(false).map(x=>(x._2,x._1))
+
+{("奇艺高清",2),("凡人修仙传",1),("Spark",1)}
+
+{(2,"奇艺高清"),(1,"凡人修仙传"),(1,"Spark")}
+
+{(2,"奇艺高清"),(1,"凡人修仙传"),(1,"Spark")}
+
+rdd3={("奇艺高清",2),("凡人修仙传",1),("Spark",1)}
+
+
+/***************步骤5.结果展示与存储******************/
+rdd3.take(10).foreach(x=>println(x._2+"\t"+x._1))
+rdd3.saveAsTextFile("hdfs://node01:9000/sogou_result1")
+
+
+/***************功能模块1.近期热点词汇-代码汇总******************/
+val rdd1=sc.textFile("hdfs://node01:9000/input/danmaku.txt").map(x=>x.split("\t")).map(x=>(x(8),1)).reduceByKey(_+_).map(x=>(x._2,x._1)).sortByKey(false).map(x=>(x._2,x._1)).take(10).foreach(x=>println(x._2+"\t"+x._1)) 
+rdd1.saveAsTextFile("hdfs://node01:9000/danmaku_result1")
+
+
+/***************功能模块2.近期热门网站-代码汇总******************/
+val rdd2=sc.textFile("hdfs://node01:9000/input/danmaku.txt").map(x=>x.split("\t")).map(x=>(x(5),1)).reduceByKey(_+_).map(x=>(x._2,x._1)).sortByKey(false).map(x=>(x._2,x._1)).take(10).foreach(x=>println(x._2+"\t"+x._1))
+rdd2.saveAsTextFile("hdfs://node01:9000/danmaku_result2")
