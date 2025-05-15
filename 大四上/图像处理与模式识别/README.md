@@ -8,4 +8,4 @@
 
 ## 大作业
 相关项目就行<br>
-[自动数独识别]([https://github.com/wefio/sudoku_img](https://github.com/wefio/sudoku_img/tree/main/%E8%87%AA%E5%8A%A8%E6%95%B0%E7%8B%AC%E8%AF%86%E5%88%AB))
+[自动数独识别](https://github.com/wefio/sudoku_img/tree/main/%E8%87%AA%E5%8A%A8%E6%95%B0%E7%8B%AC%E8%AF%86%E5%88%AB)
