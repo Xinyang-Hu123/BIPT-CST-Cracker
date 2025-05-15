@@ -1,0 +1,40 @@
+/***************功能模块1.近期热点词汇统计******************/
+
+/***************步骤1.获取数据并查看格式******************/
+/*首先将sogou.utf8拷贝至当前用户主目录下，然后运行head指令查看文件前2行*/
+cat  ~/cet4/201406.txt
+
+
+/***************步骤2.数据存储与管理******************/
+/*上传至HDFS*/
+hdfs dfs -put ~/cet4 /input
+/*查看HDFS上文件*/ 
+hdfs dfs -ls /input/
+
+
+/***************步骤3.数据创建与预处理******************/
+/*创建数据集*/
+val rdd1 = sc.textFile("hdfs://node01:9000/input/cet4/")
+/*加工数据集*/
+val rdd2=rdd1.flatMap(line =>line.split("""\W_* *""")).filter(x=>x.length>1).map(word =>(word,1))
+
+/***************步骤4.数据分析******************/
+val rdd3=rdd2.reduceByKey((a,b) => a + b).map(x=>(x._2,x._1)).sortByKey(false).map(x=>(x._2,x._1))
+
+/***************步骤5.结果展示与存储******************/
+rdd3.take(50).foreach(x=>println(x._2+"\t"+x._1))
+rdd3.saveAsTextFile("hdfs://node01:9000/cet4_result1")
+
+
+
+/**********所有单词词频统计并排序************/
+val rdd1 = sc.textFile("hdfs://node01:9000/input/cet4/").flatMap(line =>line.split("""\W_* *""")).map(word =>(word,1)).reduceByKey((a,b) => a + b).map(x=>(x._2,x._1)).sortByKey(false).map(x=>(x._2,x._1)).take(30).foreach(x=>println(x._2+"\t"+x._1))
+rdd1.saveAsTextFile("hdfs://node01:9000/cet4_result1")
+
+
+/**********按首字母词频统计并排序************/
+val rdd2 = sc.textFile("hdfs://node01:9000/input/cet4/").flatMap(line =>line.split("""\W_* *""")).filter(x=>(x.startsWith("C")||x.startsWith("c"))&&x.length>1).map(word =>(word,1)).reduceByKey((a,b) => a + b).map(x=>(x._2,x._1)).sortByKey(false).map(x=>(x._2,x._1)).take(30).foreach(x=>println(x._2+"\t"+x._1))
+
+rdd2.saveAsTextFile("hdfs://node01:9000/cet4_result2")
+
+

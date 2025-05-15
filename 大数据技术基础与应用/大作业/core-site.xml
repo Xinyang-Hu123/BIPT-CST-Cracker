@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--Put site-specific property overrides in this file. -->
+<configuration>
+<property>
+<name>fs.defaultFS</name>
+<value>hdfs://node01:9000</value>
+</property>
+<property>
+<name>hadoop.tmp.dir</name>
+<value>/home/hduser/hadoopdata</value>
+</property>
+</configuration>
