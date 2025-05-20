@@ -1,0 +1,225 @@
+//****演示默认分区数目
+val rdd=sc.parallelize(1 to 5)   
+rdd.partitions.size
+
+
+
+//****演示指定分区数目为3
+val rdd=sc.parallelize(1 to 5, 3)
+rdd.partitions.size
+
+
+//****演示集合创建makeRDD
+val rdd=sc.makeRDD(1 to 5, 3)
+rdd.collect
+
+
+//****演示集合创建parallelize
+val rdd=sc.parallelize(1 to 5)
+rdd.collect
+
+
+//****演示来自于外部存储系统（HDFS）
+val rdd=sc.textFile("hdfs://node01:9000/input/file.txt")
+rdd.collect
+
+
+//****演示map
+val rdd1 = sc.parallelize(1 to 5, 3)
+val rdd2 = rdd1.map(x => x*2)
+rdd1.collect
+rdd2.collect
+
+
+
+//****演示mapValues
+val rdd1 = sc.parallelize(List("dog", "tiger", "lion")) 
+val rdd2 = rdd1.map(x => (x.length, x))
+val rdd3 = rdd2.mapValues(x=>"A " +x)
+rdd3.collect 
+//合并成一句
+sc.parallelize(List("dog", "tiger", "lion")).map(x => (x.length, x)).mapValues(x=>"A " +x).collect
+
+
+
+//****演示flatMap
+val rdd1 = sc.parallelize(1 to 3) 
+val rdd2 = rdd1.flatMap(x => 1 to x)
+rdd2.collect 
+
+
+
+//****演示flatMapValues
+val rdd1 = sc.parallelize(List(("A",2),("B",4))) 
+val rdd2 = rdd1.flatMapValues(x=>x.to(5)) 
+rdd2.collect 
+
+
+
+//****演示groupByKey
+val rdd1 = sc.parallelize(List(("A",2), ("B",4), ("C",6), ("A",3), ("C",7))) 
+val rdd2 = rdd1.groupByKey()
+rdd2.collect
+
+
+//****演示sortByKey
+val rdd1 = sc.parallelize(List(("A",2), ("B",4), ("C",6), ("A",3), ("C",7))) 
+val rdd2 = rdd1.sortByKey(false)
+rdd2.collect
+
+
+
+//****演示reduceByKey
+val rdd1 = sc.parallelize(List(("A", 2), ("A",1), ("B", 4),("B", 6))) 
+val rdd2 = rdd1.reduceByKey((x,y) => x + y)
+rdd2.collect 
+
+
+//****演示filter
+val rdd1=sc.makeRDD(1 to 6)
+val rdd2 = rdd1.filter(x=>x%3==0)
+rdd2.collect
+
+
+
+
+//****演示join
+val l=sc.parallelize(Array(("A", 1), ("A", 2), ("B", 1), ("C", 1)))
+val r=sc.parallelize(Array(("A", 'x'), ("B", 'y'), ("B", 'z'), ("D", 'w')))
+val rdd=l.join(r)
+rdd.collect
+val rddjoinrdd2=l.leftOuterJoin(r).collect
+val joinrdd3=l.rightOuterJoin(r).collect
+val joinrdd3=l.fullOuterJoin(r).collect
+
+
+
+
+//****演示cache后时间对比
+val rdd=sc.textFile("hdfs://node01:9000/input/sogou.utf8")
+rdd.cache
+rdd.count
+rdd.count
+
+
+
+
+//****演示执行操作
+val rdd10=sc.makeRDD(1 to 10, 1)
+rdd10.first
+rdd10.count
+rdd10.collect
+rdd10.take(3) 
+rdd10.top(3) 
+
+
+
+
+//*******************************   案例1  WordCount  **********************************
+
+val wcrdd=sc.textFile("hdfs://node01:9000/input/file.txt").flatMap(line =>line.split(" ")).map(word =>(word,1)).reduceByKey((a,b) => a + b)
+wcrdd.collect
+
+val wcrdd=sc.textFile("hdfs://node01:9000/input/file.txt").flatMap(line =>line.split(" ")).map(word =>(word,1)).reduceByKey((a,b) => a + b).map(x=>(x._2,x._1)).sortByKey(false).map(y=>(y._2,y._1))
+wcrdd.collect
+
+val wcrdd=sc.textFile("hdfs://node01:9000/input/file.txt").flatMap(line =>line.split("[ ,?]+")).map(word =>(word,1)).reduceByKey((a,b) => a + b)
+wcrdd.collect
+
+sc.textFile("hdfs://node01:9000/input/file.txt").flatMap(_.split(" ")).map((_,1)).reduceByKey(_ + _).collect
+
+
+//***结果存储在HDFS上
+sc.textFile("hdfs://node01:9000/input/file.txt").flatMap(line=>line.split(" ")).map(word =>(word,1)).reduceByKey((a,b) =>a+b).saveAsTextFile("hdfs://node01:9000/output01")
+
+sc.textFile("hdfs://node01:9000/input/file.txt").flatMap(_.split(" ")).map((_,1)).reduceByKey(_ + _).saveAsTextFile("hdfs://node01:9000/output02")
+
+hdfs dfs –ls /output01
+hdfs dfs –text /output01/part-00000
+hdfs dfs -getmerge /output01/part-00000 /output01/part-00001 result
+hdfs dfs -getmerge /output01/part-* result
+
+
+//***结果按照value值排序
+val wcrdd=sc.textFile("hdfs://node01:9000/input/file.txt").flatMap(line =>line.split(" ")).map(word =>(word,1)).reduceByKey((a,b) => a + b).map(x=>(x._2,x._1)).sortByKey(false).map(y=>(y._2,y._1))
+wcrdd.map(x=>(x._2,x._1)).sortByKey(false).map(x=>(x._2,x._1)).collect 
+
+sc.textFile("hdfs://node01:9000/input/file.txt").flatMap(line =>line.split(" ")).map(word =>(word,1)).reduceByKey((a,b) =>a+b).map(x=>(x._2,x._1)).sortByKey(false).map(x=>(x._2,x._1)).saveAsTextFile("hdfs://node01:9000/output03")
+
+
+
+//*******************************   案例2  Sogou   ***************************************
+hdfs dfs -tail /input/sogou.utf8
+
+val data=sc.textFile("hdfs://node01:9000/input/sogou.utf8")
+data.cache 
+data.count
+
+/*
+data={"20111230000005 57375476989eea12 奇艺高清 1 1 http://www.qiyi.com/"，
+ "20111230000006，c5bb7774e31d0a2227 凡人修仙传 3 1 http://www.booksky.org/BookDetail"
+}
+
+{Array("20111230000005，57375476989eea12，奇艺高清，1，1，http://www.qiyi.com/")
+ Array("20111230000006，c5bb7774e31d0a2227，凡人修仙传，3，1，http://www.booksky.org/BookDetail"）
+}
+
+{ 20111230000005
+ 20111236000006
+}
+
+*/
+
+data.map(_.split("\t")).map(x=>x(0)).filter(_>"20111230010101").count  //data.map(_.split("\t")(0)).filter(_>"20111230010101").count
+data.map(_.split("\t")).map(x=>x(0)).filter(x=>(x>"20111230010101")&&(x<"20111230010200")).count
+data.map(_.split("\t")).map(x=>x(0)).filter(_>"20111230010101").filter(_<"20111230010200").count
+//***统计排名、点击均为第一的链接
+data.map(_.split("\t")).filter(_(3).toInt==1).filter(_(4).toInt==1).count
+data.map(_.split("\t")).filter(_(3)=="1").filter(_(4)=="1").count
+data.map(_.split("\t")).map(x=>(x(3),x(4))).filter(x=>x._1=="1").filter(x=>x._2=="1").count
+
+
+data.map(_.split("\t")).filter(x=>((x(3).toInt==1) && (x(4).toInt==1))).count
+data.map(_.split("\t")).filter(x=>((x(3).toInt==1) || (x(4).toInt==1))).count
+
+//****统计包含google关键字的记录
+data.map(_.split("\t")).filter(_.length==6).filter(_(2).contains("google")).count
+
+
+/*
+data={"20111230000005 57375476989eea12 奇艺高清 1 1 http://www.qiyi.com/"，
+ "20111230000006，c5bb7774e31d0a2227 凡人修仙传 3 1 http://www.booksky.org/BookDetail"
+}
+
+{Array("20111230000005，57375476989eea12，奇艺高清，1，1，http://www.qiyi.com/")
+ Array("20111230000006，c5bb7774e31d0a2227，凡人修仙传，3，1，http://www.booksky.org/BookDetail"）
+}
+
+{(57375476989eea12，1)
+(c5bb7774e31d0a2227，1)
+....}
+{
+(c5bb7774e31d0a2227,4)
+(57375476989eea12,3)
+
+}
+
+*/
+
+//***session查询次数排行
+val data=sc.textFile("hdfs://node01:9000/input/sogou.utf8").cache
+data.map(x=>x.split("\t")).map(x=>(x(1),1)).reduceByKey(_+_).map(x=>(x._2,x._1)).sortByKey(false).map(x=>(x._2,x._1)).take(10) 
+
+
+//*************连接点击排行榜*************
+val data=sc.textFile("hdfs://node01:9000/input/sogou.utf8").cache
+data.map(x=>x.split("\t")).map(x=>(x(5),1)).reduceByKey(_+_).map(x=>(x._2,x._1)).sortByKey(false).map(x=>(x._2,x._1)).saveAsTextFile("hdfs://node01:9000/output04")
+
+
+
+//*****************************   集群模式下提交spark应用**********************************
+bin/spark-submit ~/simpleApp/simpleApp.jar
+
+******************************************************************************************
+
+

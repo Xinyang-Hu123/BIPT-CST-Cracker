@@ -1,0 +1,17 @@
+原文：https://zhuanlan.zhihu.com/p/8954962057
+互联网精神万岁！
+
+代码相比原文没有任何改动！
+代码相比原文没有任何改动！
+代码相比原文没有任何改动！
+
+1.将解压后的test3拖入vscode后信任作者
+2.运行test3.py
+3.按任意键打开下一张图片
+4.图片会保存到文件夹中
+
+安装cv2
+pip install opencv-python
+
+安装numpy
+pip install numpy
