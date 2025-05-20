@@ -1,2 +1,0 @@
-imutils==0.5.4
-opencv-python==4.10.0.84
