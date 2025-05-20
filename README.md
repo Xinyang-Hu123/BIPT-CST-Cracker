@@ -1,4 +1,4 @@
-# 北京石油化工学院计算机系课程攻略
+# 北京石油化工学院工科专业攻略
 
  受到 [清华大学](https://github.com/Salensoft/thu-cst-cracker) 项目的启发，创立了本项目.
 
